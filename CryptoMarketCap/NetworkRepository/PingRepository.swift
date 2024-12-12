@@ -8,66 +8,44 @@
 import Combine
 import Foundation
 
-class PingRepository: ObservableObject{
 
-    // MARK: - Private
-    private var cancellables = Set<AnyCancellable>()
-    private var request: ApiEndpoint
-    private let client: HTTPClient
+protocol PingRepository{
+    
+    func ping() -> AnyPublisher<Ping, Error>
+}
 
-    // MARK: - Published
-    @Published var api: ApiEndpoint
-    @Published var data: Data? = nil
-    @Published var httpURLResponse: HTTPURLResponse? = nil
-    @Published var responseString: String? = nil
+final class RemotePingRepository: PingRepository{
 
     // MARK: - Injection
-    init(session: HTTPClient = URLSession.shared, request: ApiEndpoint) {
-
-        self.request = request
+    init(session: HTTPClient = URLSession.shared) {
         self.client = session
-        self.api = request
-    }
-
-    // MARK: - Public
-    func performRequest() -> AnyPublisher<(Data, HTTPURLResponse), any Error>{
-
-        self.httpURLResponse = nil
-        self.data = nil
-        self.responseString = nil
-
-        self.client.publisher(self.request.makeRequest)
-            .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { error in
-
-                print("receiveCompletion: \(error)")
-
-            }, receiveValue: { result in
-
-                self.httpURLResponse = result.1
-                print(result.1.allHeaderFields)
-                print(result.1.statusCode)
-                self.state = .response
-
-                self.data = result.0
-                do{
-
-                    if let string = String(data: result.0, encoding: .utf8){
-
-                        self.responseString = string
-                    }
-                    if let searchString = SearchProvider.decode(data: result.0 as NSData){
-
-                        self.responseString = searchString.description
-                    }
-                    if let json = try JSONSerialization.jsonObject(with: result.0, options: []) as? [String : Any]{
-                        self.responseString = json.description
-                    }
-
-                }
-                catch{}
-            })
-            .store(in: &cancellables)
     }
     
+    // MARK: - Private
+    private var cancellables = Set<AnyCancellable>()
+    private let client: HTTPClient
+
+    // MARK: - Public
+    func ping() -> AnyPublisher<Ping, Error>{
+
+        print(PingProvider().urlString)
+        return self.client
+            .publisher(PingProvider().makeRequest)
+            .tryMap(PingMapper.map)
+            .eraseToAnyPublisher()
+    }
+}
+
+struct PingMapper{
+    
+    struct InvalidJSONDecoder: Error {}
+
+    static func map(data: Data, response: HTTPURLResponse) throws -> Ping{
+        
+        if response.statusCode == 200, let ping = try? JSONDecoder().decode(Ping.self, from: data){
+            return ping
+        }else{
+            throw NetworkError.emptyErrorWithStatusCode(response.statusCode.description)
+        }
+    }
 }

@@ -8,10 +8,6 @@
 import Foundation
 import Combine
 
-protocol NetworkSession: AnyObject {
-    func publisher<T>(_ request: URLRequest, decodingType: T.Type) -> AnyPublisher<T, NetworkError> where T: Decodable
-}
-
 protocol HTTPClient {
     func publisher(_ request: URLRequest) -> AnyPublisher<(Data, HTTPURLResponse), Error>
 }
