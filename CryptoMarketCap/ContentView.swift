@@ -12,7 +12,7 @@ struct ContentView: View {
     
     @Environment(\.modelContext) private var modelContext
     
-    let viewModel = PingViewModel(service: RemotePingRepository.init())
+    let viewModel = PingViewModel(service: RemotePingRepository(), coinService: RemoteCoinRepository())
     @Query private var items: [Item]
 
     var body: some View {
@@ -52,7 +52,7 @@ struct ContentView: View {
         withAnimation {
             let newItem = Item(timestamp: Date())
             modelContext.insert(newItem)
-            self.viewModel.tryPing()
+            self.viewModel.tryCoins()
         }
     }
 
