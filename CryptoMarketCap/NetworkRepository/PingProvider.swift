@@ -31,7 +31,7 @@ struct PingProvider: ApiEndpoint {
 
     var headers: [String: String]? {
 
-        return ["Content-Type": "application/json","x-cg-demo-api-key" : "CG-tUohZZiV1CzqRaM4hcNR2aCc"]
+        return ["Content-Type": "application/json","x-cg-demo-api-key" : "ABS"]
     }
 
     var queryForCall: [URLQueryItem]? {
