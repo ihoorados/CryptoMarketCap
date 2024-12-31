@@ -13,6 +13,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     
     let viewModel = PingViewModel(service: RemotePingRepository(), coinService: RemoteCoinRepository())
+    @StateObject private var vm = HomeViewModel()
     @Query private var items: [Item]
 
     var body: some View {
@@ -25,9 +26,17 @@ struct ContentView: View {
                     } label: {
                         Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
                     }
+                    
                 }
                 .onDelete(perform: deleteItems)
             }
+            NavigationView {
+                HomeView()
+                    .navigationBarHidden(true)
+            }
+            .navigationViewStyle(StackNavigationViewStyle())
+            .environmentObject(vm)
+            
 #if os(macOS)
             .navigationSplitViewColumnWidth(min: 180, ideal: 200)
 #endif
